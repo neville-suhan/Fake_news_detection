@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analyze News | TruthLens</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg: #05070f;
+            --surface: rgba(255, 255, 255, 0.04);
+            --surface-strong: rgba(255, 255, 255, 0.07);
+            --border: rgba(255, 255, 255, 0.09);
+            --text: #f4f6fb;
+            --muted: #98a2b8;
+            --teal: #3ef0c8;
+            --violet: #8b7bff;
+            --pink: #ff6fb5;
+            --red: #ff7a8a;
+            --grad: linear-gradient(135deg, #3ef0c8 0%, #8b7bff 55%, #ff6fb5 100%);
+            --shadow: 0 25px 60px rgba(0, 0, 0, 0.45);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Ambient background */
+        .bg-orbs {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(90px);
+            opacity: 0.4;
+            animation: float 18s ease-in-out infinite;
+        }
+
+        .orb-1 { width: 480px; height: 480px; background: #1b6b5e; top: -120px; left: -140px; }
+        .orb-2 { width: 460px; height: 460px; background: #3a2d8a; bottom: -140px; right: -120px; animation-delay: -8s; }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(40px, -30px) scale(1.08); }
+        }
+
+        .grid-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+            background-size: 56px 56px;
+            mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+            -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+        }
+
+        /* Navigation */
+        nav {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 8%;
+            background: rgba(5, 7, 15, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            background: var(--grad);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        nav a.back-link {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 15px;
+            font-weight: 500;
+            padding: 9px 16px;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            transition: all 0.25s;
+        }
+
+        nav a.back-link:hover {
+            color: var(--teal);
+            border-color: rgba(62, 240, 200, 0.5);
+            background: rgba(62, 240, 200, 0.06);
+        }
+
+        /* Layout */
+        .container {
+            width: 100%;
+            max-width: 860px;
+            margin: 0 auto;
+            padding: 60px 20px 40px;
+            flex: 1;
+        }
+
+        .heading {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: rise 0.7s ease both;
+        }
+
+        .heading-tag {
+            display: inline-block;
+            color: var(--violet);
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 14px;
+        }
+
+        .heading h1 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: clamp(32px, 4.5vw, 46px);
+            font-weight: 700;
+            letter-spacing: -1px;
+            margin-bottom: 14px;
+        }
+
+        .heading h1 span {
+            background: var(--grad);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .heading p {
+            color: var(--muted);
+            font-size: 16px;
+            max-width: 560px;
+            margin: 0 auto;
+        }
+
+        /* Glass form card */
+        .form-box {
+            position: relative;
+            padding: 38px;
+            border-radius: 26px;
+            background: rgba(17, 22, 38, 0.6);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            animation: rise 0.8s 0.1s ease both;
+        }
+
+        .form-box::before {
+            content: "";
+            position: absolute;
+            inset: -1px;
+            border-radius: 26px;
+            padding: 1px;
+            background: linear-gradient(135deg, rgba(62,240,200,0.5), transparent 40%, transparent 60%, rgba(255,111,181,0.4));
+            -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+
+        .field { margin-bottom: 26px; }
+
+        .field-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 10px;
+        }
+
+        label {
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .counter {
+            font-size: 12px;
+            color: #6b7590;
+        }
+
+        input, textarea {
+            width: 100%;
+            background: rgba(5, 7, 15, 0.7);
+            border: 1px solid #252f47;
+            border-radius: 14px;
+            padding: 16px 18px;
+            color: var(--text);
+            font-family: inherit;
+            font-size: 15px;
+            outline: none;
+            transition: border-color 0.25s, box-shadow 0.25s, background 0.25s;
+        }
+
+        input:hover, textarea:hover {
+            border-color: #34405f;
+        }
+
+        input:focus, textarea:focus {
+            border-color: var(--teal);
+            background: rgba(5, 7, 15, 0.9);
+            box-shadow: 0 0 0 4px rgba(62, 240, 200, 0.12);
+        }
+
+        textarea {
+            min-height: 260px;
+            resize: vertical;
+            line-height: 1.7;
+        }
+
+        input::placeholder, textarea::placeholder {
+            color: #5d6884;
+        }
+
+        /* Button */
+        .submit-btn {
+            position: relative;
+            width: 100%;
+            padding: 18px;
+            border: none;
+            border-radius: 14px;
+            background: var(--grad);
+            background-size: 200% 200%;
+            color: #05070f;
+            font-family: inherit;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 14px 34px rgba(139, 123, 255, 0.3);
+            transition: transform 0.3s, box-shadow 0.3s, background-position 0.6s;
+        }
+
+        .submit-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            background-position: 100% 50%;
+            box-shadow: 0 18px 44px rgba(139, 123, 255, 0.45);
+        }
+
+        .submit-btn:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.75;
+            cursor: not-allowed;
+        }
+
+        .spinner {
+            display: none;
+            width: 18px;
+            height: 18px;
+            margin-right: 10px;
+            vertical-align: -4px;
+            border: 2.5px solid rgba(5,7,15,0.25);
+            border-top-color: #05070f;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        .submit-btn.loading .spinner { display: inline-block; }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Error */
+        .error {
+            min-height: 0;
+            color: var(--red);
+            font-size: 14px;
+            text-align: center;
+            margin-top: 18px;
+        }
+
+        .error:not(:empty) {
+            padding: 12px 16px;
+            border-radius: 12px;
+            background: rgba(255, 122, 138, 0.08);
+            border: 1px solid rgba(255, 122, 138, 0.25);
+            animation: shake 0.4s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-6px); }
+            75% { transform: translateX(6px); }
+        }
+
+        /* Result */
+        .result {
+            display: none;
+            margin-top: 30px;
+            padding: 32px;
+            border-radius: 20px;
+            text-align: center;
+            background: rgba(5, 7, 15, 0.55);
+            border: 1px solid var(--border);
+            animation: rise 0.6s ease both;
+        }
+
+        .result-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 16px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+        }
+
+        .result.is-real .result-icon {
+            background: rgba(62, 240, 200, 0.12);
+            border: 1px solid rgba(62, 240, 200, 0.35);
+        }
+
+        .result.is-fake .result-icon {
+            background: rgba(255, 122, 138, 0.12);
+            border: 1px solid rgba(255, 122, 138, 0.35);
+        }
+
+        .result h2 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .result h2.real { color: var(--teal); }
+        .result h2.fake { color: var(--red); }
+
+        .result p {
+            color: var(--muted);
+            font-size: 15px;
+            margin-bottom: 26px;
+        }
+
+        .confidence {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 22px;
+        }
+
+        .meter {
+            text-align: left;
+            margin-bottom: 14px;
+        }
+
+        .meter-head {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            color: var(--muted);
+            margin-bottom: 8px;
+        }
+
+        .meter-track {
+            height: 10px;
+            border-radius: 999px;
+            background: rgba(255,255,255,0.07);
+            overflow: hidden;
+        }
+
+        .meter-fill {
+            height: 100%;
+            width: 0;
+            border-radius: 999px;
+            transition: width 1.1s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .meter-fill.real-fill { background: linear-gradient(90deg, #3ef0c8, #8b7bff); }
+        .meter-fill.fake-fill { background: linear-gradient(90deg, #ff7a8a, #ff6fb5); }
+
+        .note {
+            margin-top: 26px;
+            padding-top: 22px;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            color: #6b7590;
+            font-size: 12px;
+            line-height: 1.7;
+        }
+
+        footer {
+            text-align: center;
+            padding: 26px 8%;
+            border-top: 1px solid var(--border);
+            color: #6b7590;
+            font-size: 13px;
+        }
+
+        @keyframes rise {
+            from { opacity: 0; transform: translateY(24px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 600px) {
+            nav { padding: 16px 5%; }
+            .container { padding: 40px 16px 30px; }
+            .form-box { padding: 24px; border-radius: 22px; }
+            .heading h1 { font-size: 30px; }
+            .result h2 { font-size: 26px; }
+            textarea { min-height: 200px; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation: none !important;
+                transition: none !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="bg-orbs">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+    </div>
+    <div class="grid-overlay"></div>
+
+    <nav>
+        <div class="logo">✦ TruthLens</div>
+        <a href="/" class="back-link">← Back to Home</a>
+    </nav>
+
+    <main class="container">
+
+        <div class="heading">
+            <span class="heading-tag">AI Verification</span>
+            <h1>Analyze <span>News</span></h1>
+            <p>
+                Enter the news headline and article content
+                to check the model's prediction.
+            </p>
+        </div>
+
+        <div class="form-box">
+
+            <form id="newsForm">
+
+                <div class="field">
+                    <div class="field-head">
+                        <label for="title">News Headline</label>
+                        <span class="counter" id="titleCount">0 characters</span>
+                    </div>
+                    <input
+                        type="text"
+                        id="title"
+                        placeholder="Enter the news headline..."
+                        required
+                    >
+                </div>
+
+                <div class="field">
+                    <div class="field-head">
+                        <label for="article">News Article Content</label>
+                        <span class="counter" id="articleCount">0 characters</span>
+                    </div>
+                    <textarea
+                        id="article"
+                        placeholder="Paste the complete news article here..."
+                        required
+                    ></textarea>
+                </div>
+
+                <button type="submit" id="submitBtn" class="submit-btn">
+                    <span class="spinner"></span>
+                    <span class="btn-label">Analyze News →</span>
+                </button>
+
+            </form>
+
+            <div class="error" id="error"></div>
+
+            <div class="result" id="result">
+                <div class="result-icon" id="resultIcon"></div>
+                <h2 id="prediction"></h2>
+                <p id="message"></p>
+                <div class="confidence" id="confidence"></div>
+
+                <div class="meter">
+                    <div class="meter-head">
+                        <span>Real probability</span>
+                        <span id="realPct">0%</span>
+                    </div>
+                    <div class="meter-track">
+                        <div class="meter-fill real-fill" id="realBar"></div>
+                    </div>
+                </div>
+
+                <div class="meter">
+                    <div class="meter-head">
+                        <span>Fake probability</span>
+                        <span id="fakePct">0%</span>
+                    </div>
+                    <div class="meter-track">
+                        <div class="meter-fill fake-fill" id="fakeBar"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="note">
+                Note: This model predicts based on patterns learned
+                from its training dataset. It does not independently
+                verify news against trusted sources.
+            </div>
+
+        </div>
+
+    </main>
+
+    <footer>
+        TruthLens | AI-Based Fake News Detection System
+    </footer>
+
+    <script>
+        const form = document.getElementById("newsForm");
+        const resultBox = document.getElementById("result");
+        const errorBox = document.getElementById("error");
+        const submitBtn = document.getElementById("submitBtn");
+        const btnLabel = submitBtn.querySelector(".btn-label");
+        const titleInput = document.getElementById("title");
+        const articleInput = document.getElementById("article");
+        const titleCount = document.getElementById("titleCount");
+        const articleCount = document.getElementById("articleCount");
+
+        function updateCounters() {
+            const t = titleInput.value.length;
+            const a = articleInput.value.length;
+            titleCount.textContent = t + (t === 1 ? " character" : " characters");
+            articleCount.textContent = a.toLocaleString() + (a === 1 ? " character" : " characters");
+        }
+
+        titleInput.addEventListener("input", updateCounters);
+        articleInput.addEventListener("input", updateCounters);
+
+        form.addEventListener("submit", async function(event) {
+
+            event.preventDefault();
+
+            const title = titleInput.value.trim();
+            const article = articleInput.value.trim();
+
+            resultBox.style.display = "none";
+            errorBox.textContent = "";
+
+            if (!title || !article) {
+                errorBox.textContent =
+                    "Please enter both the headline and article content.";
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.classList.add("loading");
+            btnLabel.textContent = "Analyzing...";
+
+            try {
+
+                const response = await fetch("/predict", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        title: title,
+                        text: article
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(
+                        data.detail || "Something went wrong."
+                    );
+                }
+
+                const prediction = document.getElementById("prediction");
+                const message = document.getElementById("message");
+                const confidence = document.getElementById("confidence");
+                const resultIcon = document.getElementById("resultIcon");
+                const realBar = document.getElementById("realBar");
+                const fakeBar = document.getElementById("fakeBar");
+                const realPct = document.getElementById("realPct");
+                const fakePct = document.getElementById("fakePct");
+
+                prediction.textContent = data.prediction;
+
+                if (data.prediction === "Fake News") {
+                    resultBox.classList.remove("is-real");
+                    resultBox.classList.add("is-fake");
+                    prediction.className = "fake";
+                    resultIcon.textContent = "⚠";
+                    message.textContent =
+                        "The model classifies this article as Fake News.";
+                } else {
+                    resultBox.classList.remove("is-fake");
+                    resultBox.classList.add("is-real");
+                    prediction.className = "real";
+                    resultIcon.textContent = "✓";
+                    message.textContent =
+                        "The model classifies this article as Real News.";
+                }
+
+                confidence.textContent =
+                    "Model confidence: " + data.confidence + "%";
+
+                realPct.textContent = data.real_probability + "%";
+                fakePct.textContent = data.fake_probability + "%";
+
+                resultBox.style.display = "block";
+
+                // Reset bars, then animate them to their values
+                realBar.style.width = "0%";
+                fakeBar.style.width = "0%";
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        realBar.style.width = data.real_probability + "%";
+                        fakeBar.style.width = data.fake_probability + "%";
+                    });
+                });
+
+                resultBox.scrollIntoView({ behavior: "smooth", block: "nearest" });
+
+            } catch (error) {
+
+                errorBox.textContent = error.message;
+
+            } finally {
+
+                submitBtn.disabled = false;
+                submitBtn.classList.remove("loading");
+                btnLabel.textContent = "Analyze News →";
+
+            }
+
+        });
+    </script>
+
+</body>
+</html>
