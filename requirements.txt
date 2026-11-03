@@ -1,8 +1,10 @@
+
+
 fastapi
 uvicorn
 jinja2
+scikit-learn==1.6.1
 python-multipart
 numpy
-pandas
-scikit-learn==1.6.1
+tensorflow
 joblib
